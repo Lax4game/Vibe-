@@ -45,60 +45,18 @@ export default async function handler(req, res) {
       
       console.log(`[PLAY] Đã tìm thấy: ${bestVideo.title} (${videoId})`);
 
-      // 2. Kiểm tra cache
-      const cached = streamCache.get(videoId);
-      let streamUrl = null;
-      
-      if (cached && Date.now() - cached.time < CACHE_TTL) {
-        streamUrl = cached.url;
-        console.log(`[PLAY] Trả về từ Cache`);
-      } else {
-        // Lấy stream URL bằng ytdl-core
-        const info = await ytdl.getInfo(videoId);
-        
-        // Chọn định dạng audio tốt nhất
-        const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-        const bestAudio = audioFormats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0))[0];
-        
-        if (bestAudio && bestAudio.url) {
-          streamUrl = bestAudio.url;
-          streamCache.set(videoId, { url: streamUrl, time: Date.now() });
-        }
-      }
-
-      if (!streamUrl) {
-        return res.status(500).json({ error: 'Lỗi trích xuất audio' });
-      }
-
+      // Trả về videoId ngay lập tức, không cần extract stream
       return res.status(200).json({
         videoId,
-        streamUrl, // Vercel sẽ trả về URL stream gốc từ YouTube
+        streamUrl: `https://www.youtube.com/watch?v=${videoId}`, // URL cho ReactPlayer
         title: bestVideo.title,
         thumbnail: bestVideo.thumbnail,
       });
     }
 
-    // ==========================================
-    // ACTION: PREFETCH
-    // ==========================================
     if (action === 'prefetch' && q) {
       res.status(202).json({ status: 'prefetching' });
       return;
-    }
-
-    // ==========================================
-    // ACTION: STREAM (Dùng nếu URL bị lỗi CORS)
-    // ==========================================
-    if (action === 'stream' && id) {
-       // Lấy URL
-       const info = await ytdl.getInfo(id);
-       const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
-       const bestAudio = audioFormats.sort((a, b) => (b.audioBitrate || 0) - (a.audioBitrate || 0))[0];
-       
-       if (bestAudio && bestAudio.url) {
-         return res.redirect(302, bestAudio.url);
-       }
-       return res.status(404).json({ error: 'Stream không tìm thấy' });
     }
 
     return res.status(400).json({ error: 'Hành động không hợp lệ' });

@@ -12,6 +12,7 @@
  */
 
 import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import ReactPlayer from 'react-player/lazy';
 import { musicApi } from '../services/musicApi';
 import { offlineDB } from '../services/db';
 
@@ -32,42 +33,16 @@ export function PlayerProvider({ children }) {
   const [showLyrics, setShowLyrics] = useState(false);       // Trạng thái hiển thị lyric
   const currentBlobUrlRef = useRef(null);                    // Lưu URL offline để dọn dẹp
 
-  // Ref tới thẻ <audio> HTML5 (không gây re-render khi thay đổi)
-  const audioRef = useRef(new Audio());
+  const [streamUrl, setStreamUrl] = useState(null); // URL cho ReactPlayer
 
-  // === AUDIO EVENT LISTENERS ===
-  useEffect(() => {
-    const audio = audioRef.current;
-    audio.volume = volume;
-
-    const handleLoadedMetadata = () => setDuration(audio.duration);
-    const handleEnded = () => nextTrack();
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-
-    return () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    audioRef.current.volume = volume;
-  }, [volume]);
+  const playerRef = useRef(null);
 
   // Cập nhật currentTime siêu mượt bằng requestAnimationFrame
   useEffect(() => {
     let animationFrame;
     const updateProgress = () => {
-      if (audioRef.current && !audioRef.current.paused) {
-        setCurrentTime(audioRef.current.currentTime);
+      if (playerRef.current && isPlaying) {
+        setCurrentTime(playerRef.current.getCurrentTime() || 0);
         animationFrame = requestAnimationFrame(updateProgress);
       }
     };
@@ -88,6 +63,7 @@ export function PlayerProvider({ children }) {
     setCurrentTrack(track);
     setIsLoading(true);
     setLyrics([]); 
+    setStreamUrl(null);
 
     if (currentBlobUrlRef.current) {
       URL.revokeObjectURL(currentBlobUrlRef.current);
@@ -100,38 +76,28 @@ export function PlayerProvider({ children }) {
     }
 
     try {
-      let streamUrl = null;
+      let url = null;
       const offlineTrack = await offlineDB.getTrack(track.id);
       if (offlineTrack && offlineTrack.audioBlob) {
-        streamUrl = offlineDB.createPlayableUrl(offlineTrack);
-        currentBlobUrlRef.current = streamUrl;
+        url = offlineDB.createPlayableUrl(offlineTrack);
+        currentBlobUrlRef.current = url;
       } else {
-        streamUrl = await musicApi.getStreamUrl(track);
+        url = await musicApi.getStreamUrl(track);
       }
 
-      if (streamUrl) {
-        audioRef.current.src = streamUrl;
-        audioRef.current.play().catch(err => console.error("Auto-play failed:", err));
+      if (url) {
+        setStreamUrl(url);
+        setIsPlaying(true);
 
         musicApi.fetchLyrics(track).then(rawLyrics => {
-          // Chỉ cập nhật nếu bài hát vẫn là bài đang được yêu cầu phát
           if (rawLyrics) {
-            const parsed = parseLyrics(rawLyrics);
-            // Chúng ta dùng track.id từ closure để so khớp
-            setLyrics(prev => {
-              // Lưu ý: setLyrics(parsed) là đủ nếu logic phát nhạc đảm bảo xóa lyrics khi đổi bài
-              return parsed;
-            });
+            setLyrics(parseLyrics(rawLyrics));
           }
         });
 
         const idx = newPlaylist.findIndex(s => s.id === track.id);
         if (idx !== -1 && idx < newPlaylist.length - 1) {
-          const nextTrack = newPlaylist[idx + 1];
-          const isNextDownloaded = await offlineDB.isDownloaded(nextTrack.id);
-          if (!isNextDownloaded) {
-             musicApi.prefetch(nextTrack);
-          }
+           // prefetch...
         }
       }
     } catch (error) {
@@ -142,14 +108,9 @@ export function PlayerProvider({ children }) {
   }, []);
 
   const togglePlay = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio.src) return;
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play().catch(err => console.error("Playback failed:", err));
-    }
-  }, [isPlaying]);
+    if (!streamUrl) return;
+    setIsPlaying(prev => !prev);
+  }, [streamUrl]);
 
   const nextTrack = useCallback(() => {
     if (playlist.length > 0 && currentIndex < playlist.length - 1) {
@@ -166,8 +127,8 @@ export function PlayerProvider({ children }) {
   }, [currentIndex, playlist, playTrack]);
 
   const seekTo = useCallback((time) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
+    if (playerRef.current) {
+      playerRef.current.seekTo(time, 'seconds');
     }
   }, []);
 
@@ -208,6 +169,24 @@ export function PlayerProvider({ children }) {
     <PlayerContext.Provider value={mainValue}>
       <PlayerProgressContext.Provider value={progressValue}>
         {children}
+        {streamUrl && (
+          <ReactPlayer
+            ref={playerRef}
+            url={streamUrl}
+            playing={isPlaying}
+            volume={volume}
+            onDuration={(d) => setDuration(d)}
+            onEnded={nextTrack}
+            width="0"
+            height="0"
+            style={{ display: 'none' }}
+            config={{
+              youtube: {
+                playerVars: { autoplay: 1, controls: 0 }
+              }
+            }}
+          />
+        )}
       </PlayerProgressContext.Provider>
     </PlayerContext.Provider>
   );
