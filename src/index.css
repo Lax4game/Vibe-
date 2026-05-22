@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+/* === Mobile-First Reset === */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@theme {
+  --color-brand-300: #fcd34d;
+  --color-brand-400: #fbbf24;
+  --color-brand-500: #f59e0b;
+  --color-brand-600: #d97706;
+  
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  
+  /* Richer surface colors */
+  --color-surface-950: #0a0a0c;
+  --color-surface-900: #121216;
+  --color-surface-800: #1c1c22;
+  --color-surface-500: #3f3f46;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-surface-950 text-white font-sans antialiased selection:bg-brand-500/30;
+    /* Premium Noise overlay */
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(249, 115, 22, 0.1) 0px, transparent 50%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+    background-color: #0a0a0c; /* Fallback */
+    /* Safe area cho điện thoại có notch (iPhone X+, Android punch-hole) */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar globally */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+  }
+
+  /* Ẩn scrollbar trên mobile để giao diện sạch hơn */
+  @media (max-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] shadow-2xl;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+  
+  .glass-panel {
+    @apply bg-surface-950/70 backdrop-blur-3xl border border-white/[0.05] shadow-[0_8px_32px_rgba(0,0,0,0.5)];
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-300 via-brand-400 to-accent-400;
+  }
+  
+  /* Hiệu ứng glow tĩnh */
+  .glow-effect {
+    box-shadow: 0 0 40px -10px var(--color-brand-500);
+  }
+
+  /* Hide scrollbar for cleaner look on some containers */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* === Lyrics Panel — Pure CSS transitions with Motion Blur === */
+  .lyric-line {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: rgba(161, 161, 170, 0.3);
+    transform-origin: left center;
+    transform: scale(0.98) translateY(0);
+    filter: blur(2px);
+    opacity: 0.3;
+    transition:
+      transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.4s ease,
+      font-size 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      font-weight 0.3s ease,
+      text-shadow 0.5s ease;
+    will-change: transform, filter, opacity;
+  }
+
+  @media (min-width: 1024px) {
+    .lyric-line {
+      font-size: 1.5rem;
+    }
+  }
+
+  .lyric-line.lyric-active {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    transform: scale(1.02) translateY(0);
+    filter: blur(0px);
+    opacity: 1;
+    text-shadow:
+      0 0 20px rgba(255, 255, 255, 0.5),
+      0 0 50px rgba(251, 191, 36, 0.2);
+  }
+
+  @media (min-width: 1024px) {
+    .lyric-line.lyric-active {
+      font-size: 2rem;
+    }
+  }
+
+  /* Các dòng gần dòng active sẽ ít blur hơn — tạo hiệu ứng "Depth of Field" */
+  .lyric-line.lyric-near {
+    filter: blur(0.8px);
+    opacity: 0.5;
+    color: rgba(161, 161, 170, 0.55);
+  }
+}
+  /* === Custom Lyrics Sync Controls === */
+  .sync-input::-webkit-inner-spin-button,
+  .sync-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .sync-input {
+    -moz-appearance: textfield;
+  }
+
+  .sync-btn {
+    @apply w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white transition-all hover:bg-brand-500 hover:border-brand-500 active:scale-90;
+  }
+
+  /* === Mobile Responsive Utilities === */
+  /* Padding bottom cho player bar trên mobile có nút home ảo */
+  .mobile-safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4px);
+  }
+
+  /* Tối ưu touch targets cho mobile (min 44x44px theo Apple HIG) */
+  @media (max-width: 768px) {
+    .touch-target {
+      min-width: 44px;
+      min-height: 44px;
+    }
+  }
