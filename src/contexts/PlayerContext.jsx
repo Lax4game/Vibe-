@@ -177,9 +177,9 @@ export function PlayerProvider({ children }) {
             volume={volume}
             onDuration={(d) => setDuration(d)}
             onEnded={nextTrack}
-            width="0"
-            height="0"
-            style={{ display: 'none' }}
+            width="10px"
+            height="10px"
+            style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }}
             config={{
               youtube: {
                 playerVars: { autoplay: 1, controls: 0 }
