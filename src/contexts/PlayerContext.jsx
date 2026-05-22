@@ -182,9 +182,16 @@ export function PlayerProvider({ children }) {
           style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }}
           config={{
             youtube: {
-              playerVars: { playsinline: 1, controls: 0 }
+              playerVars: { 
+                playsinline: 1, 
+                controls: 0,
+                origin: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173',
+                rel: 0
+              }
             }
           }}
+          onPlay={() => console.log('▶️ ReactPlayer is playing successfully!')}
+          onBuffer={() => console.log('⏳ ReactPlayer is buffering...')}
         />
       </PlayerProgressContext.Provider>
     </PlayerContext.Provider>

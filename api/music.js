@@ -32,8 +32,7 @@ export default async function handler(req, res) {
     if (action === 'play' && q) {
       console.log(`[PLAY] Tìm bài hát: "${q}"`);
       
-      // 1. Tìm video trên YouTube
-      const r = await yts(q + ' official audio');
+      const r = await yts(q + ' lyric video');
       const videos = r.videos;
 
       if (!videos || videos.length === 0) {
