@@ -13,6 +13,8 @@
 
 
 
+const PROXY_BASE = 'https://zenmuzik-proxy.onrender.com';
+
 // Cache URL stream đã lấy được (tránh gọi lại server)
 const streamUrlCache = new Map();
 
@@ -92,13 +94,20 @@ export const musicApi = {
     }
 
     try {
-      const url = `/api/music?action=play&q=${encodeURIComponent(query)}`;
+      const url = `${PROXY_BASE}/api/play?q=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (data.streamUrl) {
-          streamUrlCache.set(query, data.streamUrl);
-          return data.streamUrl;
+        let streamUrl = data.streamUrl;
+        
+        // Nếu proxy trả về path tương đối (VD: /audio/abcd), nối PROXY_BASE vào
+        if (streamUrl && streamUrl.startsWith('/')) {
+          streamUrl = `${PROXY_BASE}${streamUrl}`;
+        }
+        
+        if (streamUrl) {
+          streamUrlCache.set(query, streamUrl);
+          return streamUrl;
         }
       }
     } catch (error) {
@@ -116,7 +125,7 @@ export const musicApi = {
 
     console.log(`🔮 [musicApi] Prefetching: ${track.title}`);
     try {
-      const url = `/api/music?action=prefetch&q=${encodeURIComponent(query)}`;
+      const url = `${PROXY_BASE}/api/prefetch?q=${encodeURIComponent(query)}`;
       fetch(url).catch(() => {});
     } catch (e) { /* fire-and-forget */ }
   },
