@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: zenmuzik-proxy
+    env: docker
+    region: singapore
+    plan: free
+    branch: main
+    rootDir: server
+    healthCheckPath: /ping
+    envVars:
+      - key: PORT
+        value: 3001
