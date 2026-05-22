@@ -12,7 +12,7 @@
  */
 
 import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import ReactPlayer from 'react-player/lazy';
+import ReactPlayer from 'react-player';
 import { musicApi } from '../services/musicApi';
 import { offlineDB } from '../services/db';
 
