@@ -169,24 +169,23 @@ export function PlayerProvider({ children }) {
     <PlayerContext.Provider value={mainValue}>
       <PlayerProgressContext.Provider value={progressValue}>
         {children}
-        {streamUrl && (
-          <ReactPlayer
-            ref={playerRef}
-            url={streamUrl}
-            playing={isPlaying}
-            volume={volume}
-            onDuration={(d) => setDuration(d)}
-            onEnded={nextTrack}
-            width="10px"
-            height="10px"
-            style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }}
-            config={{
-              youtube: {
-                playerVars: { autoplay: 1, controls: 0 }
-              }
-            }}
-          />
-        )}
+        <ReactPlayer
+          ref={playerRef}
+          url={streamUrl || undefined}
+          playing={isPlaying}
+          volume={volume}
+          onDuration={(d) => setDuration(d)}
+          onEnded={nextTrack}
+          onError={(e) => console.error('ReactPlayer Error:', e)}
+          width="10px"
+          height="10px"
+          style={{ position: 'absolute', top: '-9999px', left: '-9999px', opacity: 0 }}
+          config={{
+            youtube: {
+              playerVars: { playsinline: 1, controls: 0 }
+            }
+          }}
+        />
       </PlayerProgressContext.Provider>
     </PlayerContext.Provider>
   );
