@@ -11,11 +11,7 @@
  * - Có cơ chế prefetch: tải trước bài tiếp theo trong playlist.
  */
 
-// Base URL cho proxy server
-// Development: Vite proxy → localhost:3001
-// Production: Vercel serverless functions
-const IS_PROD = import.meta.env.PROD;
-const PROXY_BASE = '/api';
+
 
 // Cache URL stream đã lấy được (tránh gọi lại server)
 const streamUrlCache = new Map();
@@ -96,20 +92,13 @@ export const musicApi = {
     }
 
     try {
-      // Production: dùng Vercel serverless function
-      // Development: dùng local proxy server
-      const url = IS_PROD
-        ? `${PROXY_BASE}/music?action=play&q=${encodeURIComponent(query)}`
-        : `${PROXY_BASE}/play?q=${encodeURIComponent(query)}`;
-      
+      const url = `/api/music?action=play&q=${encodeURIComponent(query)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        // Production trả về URL trực tiếp, Dev trả về /audio/:videoId
-        const streamUrl = data.streamUrl;
-        if (streamUrl) {
-          streamUrlCache.set(query, streamUrl);
-          return streamUrl;
+        if (data.streamUrl) {
+          streamUrlCache.set(query, data.streamUrl);
+          return data.streamUrl;
         }
       }
     } catch (error) {
@@ -120,10 +109,6 @@ export const musicApi = {
 
   /**
    * Prefetch - Yêu cầu server tải trước audio của bài tiếp theo
-   * 
-   * GIẢI THÍCH: Kỹ thuật "fire-and-forget" - gửi request rồi không chờ kết quả.
-   * Server sẽ xử lý ở background. Khi user chuyển bài, audio đã sẵn sàng trong cache.
-   * Giúp trải nghiệm nghe nhạc liền mạch, không phải chờ đợi.
    */
   async prefetch(track) {
     const query = `${track.title} ${track.artist} audio`;
@@ -131,9 +116,7 @@ export const musicApi = {
 
     console.log(`🔮 [musicApi] Prefetching: ${track.title}`);
     try {
-      const url = IS_PROD
-        ? `${PROXY_BASE}/music?action=prefetch&q=${encodeURIComponent(query)}`
-        : `${PROXY_BASE}/prefetch?q=${encodeURIComponent(query)}`;
+      const url = `/api/music?action=prefetch&q=${encodeURIComponent(query)}`;
       fetch(url).catch(() => {});
     } catch (e) { /* fire-and-forget */ }
   },

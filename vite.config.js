@@ -18,30 +18,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 5173,
-    proxy: {
-      // Mọi request bắt đầu bằng /api sẽ được forward tới backend
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-      // Mọi request stream audio cũng forward tới backend
-      '/audio': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-      // Proxy cho OpenRouter để tránh lỗi CORS
-      '/openrouter': {
-        target: 'https://openrouter.ai/api/v1',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/openrouter/, ''),
-      },
-      // Proxy cho Groq để tránh lỗi CORS
-      '/groq': {
-        target: 'https://api.groq.com/openai/v1',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/groq/, ''),
-      },
-    },
+    port: 5173
   },
 })
