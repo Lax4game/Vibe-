@@ -1,0 +1,11 @@
+{
+  "name": "vibecloud-proxy",
+  "version": "1.0.0",
+  "description": "Proxy server for ZenMuzik",
+  "main": "proxy-server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node proxy-server.js"
+  },
+  "dependencies": {}
+}

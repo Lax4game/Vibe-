@@ -9,7 +9,7 @@ import https from "https";
 import { exec } from "child_process";
 import { URL } from "url";
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Cache stream URLs (they expire after ~6 hours)
 const streamCache = new Map();
